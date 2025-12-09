@@ -1,0 +1,338 @@
+---
+title: "Social Engagement Analysis"
+output: html_document
+self_contained: true
+---
+
+This report explores patterns in social and volunteering engagement in Singapore.
+The dataset of 3076 respondents used contains survey results from the MCCY (Ministry of Culture, Community and Youth) Social Values Survey on attitudes and actions that inform Singaporeans' desire to build social capital. 
+
+
+## Response Variable: Social score as measure of engagement
+
+Social score is defined as the sum of the values of the different variations of variables socialinvolve and volunteerdonate (columns 7 to 17). 1 represents Yes and 0 represents No.
+
+social_involve:
+
+1. Participation in any social groups - Sports related groups (e.g. soccer, running, badminton etc)
+
+2. Participation in any social groups - Arts and Cultural groups (e.g. dance groups, book club, band etc)
+
+3. Participation in any social groups - Community groups (e.g. resident community etc)
+
+4. Participation in any social groups - Welfare & Self-Help groups (e.g. non-profit organisations)
+
+5. Participation in any social groups - Religious groups
+
+6. Participation in any social groups - Interest & Hobby groups
+
+volunteerdonate:
+
+1. Participation in any volunteering/donating - Volunteered time at community centers / resident communities / places of worship / other charitable organisations
+
+2. Participation in any volunteering/donating - Donated money to charitable causes
+
+3. Participation in any volunteering/donating - Donated goods / services to charitable causes (e.g. food, toy)
+
+4. Participation in any volunteering/donating - Volunteered time for community projects initiated by friends, family, neighbours
+
+5. Participation in any volunteering/donating - Helped a neighbor or others in my community who were in need
+
+
+
+```{r include=FALSE}
+
+data = read.csv('SocialValuesSurveydata.csv')
+
+#sum(is.na(df)) 
+
+
+for (i in 7:17) {
+  for (j in 1:nrow(data)){
+    
+    if(data[j, i] == 'Yes'){
+      data[j,i] = 1
+    } else {
+      data[j, i] = 0
+    }
+    
+  }
+  
+
+}
+
+data[, 7:17] = lapply(data[, 7:17], as.numeric)
+
+
+data$social_score = rowSums(data[,7:17])
+
+
+```
+
+
+## Numerical and Graphical Summary of Social Score 
+
+Social scores are generally low with the median being 1 and mean being 1.387.
+Minimum is 0 and maximum is 11.
+
+```{r pressure, echo=FALSE}
+
+summary(data$social_score)
+
+boxplot(data$social_score)
+
+```
+
+## Social Engagement Breakdown
+```{r echo=FALSE}
+freq_social = sapply(data[7:12], sum)
+par(mar = c(4, 6, 2, 2))
+barplot(freq_social, las = 2, names.arg = c('Sports', 'Arts and Culture', 'Community', 'Welfare and Self-help', 'Religious', 'Interest and Hobby'), horiz = TRUE, cex.names = 0.5)
+```
+
+Majority of respondents participate in Religious or Sports groups. Arts and Culture and Welfare and Self-help groups have the least frequent participation.
+
+## Volunteering Breakdown
+
+```{r echo=FALSE}
+freq_volunteer = sapply(data[,13:17], sum)
+barplot(freq_volunteer, names.arg = c(1, 2, 3, 4, 5))
+
+
+```
+Labels:
+
+1 - Volunteered time at community centers / resident communities / places of worship / other charitable organisations
+
+2 - Donated money to charitable causes
+
+3 -  Donated goods / services to charitable causes (e.g. food, toy)
+
+4 - Volunteered time for community projects initiated by friends, family, neighbours
+
+5 - Helped a neighbor or others in my community who were in need
+
+
+Majority of respondents donated money and goods and services to charitable causes. 
+There is a significantly lower participation in volunteering time in organisations and projects, and helping others in the community.
+
+
+## Exploring Association of Demographic Variables with Social Score
+
+
+### 1. Gender
+```{r echo = FALSE}
+
+avg_score <- tapply(data$social_score, data$gender, mean)
+barplot(avg_score)
+
+```
+
+
+The plot shows that females have a slightly higher mean social score than males. There are 1612 females and 1464 males. 
+
+
+### 2. Age
+```{r echo=FALSE}
+
+avg_score <- tapply(data$social_score, data$age_2, mean)
+par(mar = c(4, 8, 2, 2))
+barplot(avg_score, horiz = TRUE, las = 2)
+
+```
+
+
+Those 35-44 years old and 45-54 years old have the highest mean social score. 
+The table below shows the number of respondents belonging to each age group.
+
+```{r echo = FALSE}
+table(data$age_2)
+
+```
+
+
+### 3. Monthly Household Income
+```{r echo=FALSE}
+
+income_levels <- c("Below S$1,000", "S$1,000-2,000", "S$2,001-S$3,000", "S$3,001-S$4,000",
+                   "S$4,001-S$5,000", "S$5,001-S$6,000", "S$6,001-S$7,000", "S$7,001-S$8,000",
+                   "S$8,001-S$9,000", "S$9,001-S$10,000", "$10,001-$11,000", "$11,001-$12,000",
+                   "$12,001-$13,000", "$13,001-$14,000", "$14,001-$15,000", "$15,001-$20,000",
+                   "Above $20,000", "No income")
+
+data$mhi <- factor(data$mhi, levels = income_levels, ordered = TRUE)
+
+hseincomedata = data[data$mhi != 'Refuse',]
+
+table(hseincomedata$mhi)
+
+
+```
+
+From the table, majority of respondents have monthly household income of 
+$4001-$5000 (267 people) and $3001-$4000 (261 people). The minority of respondents have monthly household income of $13001-$14000 (35 people) and $14001-$15000 (44 people).
+
+
+```{r echo = FALSE}
+par(mar = c(4, 8, 2, 2))
+barplot(table(hseincomedata$mhi), horiz= TRUE, las = 2, cex.names = 0.5)
+
+
+```
+
+
+The above is a bar chart representation of the frequency of each income group. 
+
+```{r echo = FALSE}
+
+avg_score <- tapply(hseincomedata$social_score, hseincomedata$mhi, mean)
+par(mar = c(4, 8, 2, 2))
+barplot(avg_score, horiz = TRUE , las = 2, cex.names = 0.5)
+```
+
+
+The above is a plot of mean social score by household income. Social score generally increases with increasing household income.
+
+
+### 4. Dwelling
+
+
+Bar chart of the frequency of housing types:
+```{r echo = FALSE}
+
+table(data$dwelling)
+
+par(mar = c(4, 8, 2, 2))
+barplot(table(data$dwelling), las = 2, horiz = TRUE, cex.names = 0.5) 
+```
+
+
+
+```{r echo=FALSE}
+
+avg_score <- tapply(data$social_score, data$dwelling, mean)
+par(mar = c(4,8,2,2))
+barplot(avg_score, las = 2, cex.names = 0.5, horiz = TRUE)
+
+```
+
+
+Plot of mean social score against housing type. Social score generally increases with increasing average price of housing.
+
+### 5. Education 
+
+
+Table and bar chart representations of the frequency of the different education levels: 
+
+```{r echo = FALSE}
+ed_levels <- c("No formal education",
+               "Primary school / PSLE",
+               "Secondary/ high school / \"O / N\" Levels",
+               "Technical / vocational school",
+               "Polytechnic / diploma",
+               "Junior College / Pre-U / \"A\" Levels",
+               "University / degree",
+               "Post graduate degree",
+               "Other")
+            
+
+data$highest_ed <- factor(data$highest_ed, levels = ed_levels, ordered = TRUE)
+
+table(data$highest_ed)
+par(mar = c(4,9,2,2))
+barplot(table(data$highest_ed), las = 2, cex.names = 0.5, horiz = TRUE) 
+
+```
+
+
+Most respondents have secondary/high school/O/N Levels or University/degree  as their highest education level. 
+Least respondents have No formal education, Junior College/Pre U/A Levels,
+Postgraduate or Other as their highest education level. 
+
+
+Bar chart of average social score per education level:
+```{r echo = FALSE}
+
+avg_score <- tapply(data$social_score, data$highest_ed, mean)
+par(mar = c(4,9,2,2))
+barplot(avg_score, las = 2, cex.names = 0.5, horiz = TRUE)
+
+```
+
+
+Average social score is highest for postgraduates and Junior College despite them being relatively underrepresented in the sample of respondents. Their mean social score (around 1.7 and >2.0 respectively) are significantly greater than that for  Secondary/high school/O/N Levels (around 1.2), which made up a large majority of the respondents.
+
+
+## Chi Square Test: Are people with certain social networks more likely to volunteer at organisations?
+
+(Defined as: Volunteered time at community centers / resident communities / places of worship / other charitable organisations)
+
+
+
+Variable: Have close friends of different nationality
+```{r echo = FALSE}
+table_data <- table(data$snetwork_nationality, data$volunteerdonate_1)
+chisq.test(table_data)
+```
+Variable: Have close friends of different ethnicity
+```{r echo = FALSE}
+table_data <- table(data$snetwork_ethnicity, data$volunteerdonate_1)
+chisq.test(table_data)
+```
+
+Variable: Have close friends of different education 
+```{r echo = FALSE}
+table_data <- table(data$snetwork_education, data$volunteerdonate_1)
+chisq.test(table_data)
+```
+
+Variable: Have close friends of different income
+```{r echo = FALSE}
+table_data <- table(data$snetwork_income, data$volunteerdonate_1)
+chisq.test(table_data)
+```
+
+Variable: Have close friends of different religion
+```{r echo = FALSE}
+table_data <- table(data$snetwork_religion, data$volunteerdonate_1)
+chisq.test(table_data)
+```
+
+Variable: Have close Singaporean friends
+```{r echo = FALSE}
+table_data <- table(data$close_sg_friends, data$volunteerdonate_1)
+suppressWarnings(chisq.test(table_data))
+
+```
+
+
+There is significant association between having friends of different nationalities, ethnicities or religion, and volunteering at organisations (p < 0.05). 
+
+There is no significant association between education level, income or having close Singaporean friends and volunteering at organisations (p > 0.05).
+
+Among the network types examined, having friends of different nationalities or religions shows the strongest association with volunteering at organisations.
+
+Among the network types examined, having close Singaporean friends or friends of different education levels show the weakest association with volunteering at organisations.
+
+
+## T test: Is there significant association between Gender and Social engagement? 
+
+```{r echo = FALSE}
+var(data[data$gender == 'Female', 'social_score'])
+var(data[data$gender == 'Male', 'social_score'])
+
+t.test(social_score ~ gender, data = data)
+```
+
+
+Assumptions:
+
+1. Each observation is independent.
+
+2. Normality:  With large sample size of 1612 females and 1464 males, the Central Limit Theorem ensures the sampling distribution of the mean is roughly normal.
+
+3. Equality of variances: 
+Variance for female social scores is 1.974359 and that for males is 1.968378
+The ratio is 1.003. They are effectively equal.
+
+From the t-test, there is significant evidence that the mean of females' social scores is higher than that of males.
